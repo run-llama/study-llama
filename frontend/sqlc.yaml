@@ -1,0 +1,18 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "query.auth.sql"
+    schema: "schema.auth.sql"
+    gen:
+      go:
+        package: "authdb"
+        out: "authdb"
+        sql_package: "pgx/v5"
+  - engine: "postgresql"
+    queries: "query.rules.sql"
+    schema: "schema.rules.sql"
+    gen:
+      go:
+        package: "rulesdb"
+        out: "rulesdb"
+        sql_package: "pgx/v5"
