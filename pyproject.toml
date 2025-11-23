@@ -9,10 +9,10 @@ description = "Backend workflows to orchestrate file classification and ingestio
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "asyncpg>=0.30.0",
     "llama-cloud-services>=0.6.81",
     "llama-index-workflows>=2.11.4",
     "openai>=2.8.1",
-    "psycopg2-binary>=2.9.11",
     "qdrant-client>=1.16.0",
     "sqlalchemy>=2.0.44",
 ]

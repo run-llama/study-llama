@@ -14,7 +14,7 @@ async def get_llama_extract(*args, **kwargs):
     )
 
 async def get_db_conn(*args, **kwargs):
-    eng = create_async_engine(url=os.getenv("POSTGRES_CONNECTION_STRING", ""))
+    eng = create_async_engine(url=os.getenv("POSTGRES_CONNECTION_STRING", "").replace("postgresql://", "postgresql+asyncpg://"))
     return AsyncConnection(async_engine=eng)
 
 async def get_vector_db_summaries(*args, **kwargs):
