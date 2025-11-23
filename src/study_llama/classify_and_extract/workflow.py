@@ -3,18 +3,17 @@ from workflows import Workflow, Context, step
 from workflows.resource import Resource
 from llama_cloud.types.file import File
 from llama_cloud.types.extract_run import ExtractRun
-from typing import Annotated, TYPE_CHECKING, cast
+from typing import Annotated, cast
 from study_llama.filesdb.query_files import AsyncQuerier as AsyncFilesQuerier
 from study_llama.rulesdb.query_rules import AsyncQuerier as AsyncRulesQuerier
 from .events import InputFileEvent, IngestedFileEvent, ClassifiedFileEvent, ExtractedFileEvent
 from .resources import get_db_conn, get_llama_classify, get_llama_extract, get_vector_db_faqs, get_vector_db_summaries
 from .models import StudyNotes, WorkflowState, EXTRACT_CONFIG
 from .utils import rules_to_classify_rules
-if TYPE_CHECKING:
-    from llama_cloud_services.beta.classifier.client import LlamaClassify
-    from llama_cloud_services.extract import LlamaExtract
-    from sqlalchemy.ext.asyncio import AsyncConnection
-    from study_llama.vectordb.vectordb import SummaryVectorDB, FaqsVectorDB
+from llama_cloud_services.beta.classifier.client import LlamaClassify
+from llama_cloud_services.extract import LlamaExtract
+from sqlalchemy.ext.asyncio import AsyncConnection
+from study_llama.vectordb.vectordb import SummaryVectorDB, FaqsVectorDB
 
 class ClassifyExtractWorkflow(Workflow):
     @step

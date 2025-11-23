@@ -3,8 +3,7 @@ from workflows.resource import Resource
 from typing import Annotated, TYPE_CHECKING
 from .resources import get_vector_db_faqs, get_vector_db_summaries
 from .events import SearchInputEvent, SearchOutputEvent
-if TYPE_CHECKING:
-    from study_llama.vectordb.vectordb import SummaryVectorDB, FaqsVectorDB
+from study_llama.vectordb.vectordb import SummaryVectorDB, FaqsVectorDB
 
 class SearchWorkflow(Workflow):
     @step
