@@ -1,4 +1,6 @@
 import os
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 from qdrant_client import AsyncQdrantClient
 from llama_cloud_services.beta.classifier import LlamaClassify
 from llama_cloud_services.extract import LlamaExtract
@@ -13,9 +15,11 @@ async def get_llama_extract(*args, **kwargs):
         api_key=os.getenv("LLAMA_CLOUD_API_KEY", ""),
     )
 
-async def get_db_conn(*args, **kwargs):
+@asynccontextmanager
+async def get_db_conn() -> AsyncIterator[AsyncConnection]:
     eng = create_async_engine(url=os.getenv("POSTGRES_CONNECTION_STRING", "").replace("postgresql://", "postgresql+asyncpg://"))
-    return AsyncConnection(async_engine=eng)
+    async with eng.connect() as db_conn:
+        yield db_conn
 
 async def get_vector_db_summaries(*args, **kwargs):
     client = AsyncQdrantClient(

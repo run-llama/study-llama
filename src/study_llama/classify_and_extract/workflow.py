@@ -12,36 +12,36 @@ from .models import StudyNotes, WorkflowState, EXTRACT_CONFIG
 from .utils import rules_to_classify_rules
 from llama_cloud_services.beta.classifier.client import LlamaClassify
 from llama_cloud_services.extract import LlamaExtract
-from sqlalchemy.ext.asyncio import AsyncConnection
 from study_llama.vectordb.vectordb import SummaryVectorDB, FaqsVectorDB
 
 class ClassifyExtractWorkflow(Workflow):
     @step
-    async def classify_file(self, ev: InputFileEvent, ctx: Context[WorkflowState], classifier: Annotated[LlamaClassify, Resource(get_llama_classify)], db_conn: Annotated[AsyncConnection, Resource(get_db_conn)]) -> ClassifiedFileEvent | IngestedFileEvent:
-        querier = AsyncRulesQuerier(conn=db_conn)
-        response = querier.get_rules(username=ev.username)
-        rules = []
-        async for rule in response:
-            rules.append(rule)
-        class_rules = rules_to_classify_rules(rules=rules)
-        result = await classifier.aclassify_file_ids(rules=class_rules, file_ids=[ev.file_id])
-        file_type: str | None = None
-        for item in result.items:
-            if (class_res := item.result) is not None:
-                if class_res.type is not None:
-                    file_type = class_res.type
-                    break
-        if file_type is not None:
-            async with ctx.store.edit_state() as state:
-                state.file_name = ev.file_name
-                state.username = ev.username
-                state.file_id = ev.file_id
-                state.file_type = file_type
-            querier_files = AsyncFilesQuerier(conn=db_conn)
-            await querier_files.create_file(username=ev.username, file_name=ev.file_name, file_category=file_type)
-            return ClassifiedFileEvent(file_type=file_type)
-        else:
-            return IngestedFileEvent(success=False, error="It was not possible to classify the provided file based on the existing categories")
+    async def classify_file(self, ev: InputFileEvent, ctx: Context[WorkflowState], classifier: Annotated[LlamaClassify, Resource(get_llama_classify)]) -> ClassifiedFileEvent | IngestedFileEvent:
+        async with get_db_conn() as db_conn:
+            querier = AsyncRulesQuerier(conn=db_conn)
+            response = querier.get_rules(username=ev.username)
+            rules = []
+            async for rule in response:
+                rules.append(rule)
+            class_rules = rules_to_classify_rules(rules=rules)
+            result = await classifier.aclassify_file_ids(rules=class_rules, file_ids=[ev.file_id])
+            file_type: str | None = None
+            for item in result.items:
+                if (class_res := item.result) is not None:
+                    if class_res.type is not None:
+                        file_type = class_res.type
+                        break
+            if file_type is not None:
+                async with ctx.store.edit_state() as state:
+                    state.file_name = ev.file_name
+                    state.username = ev.username
+                    state.file_id = ev.file_id
+                    state.file_type = file_type
+                querier_files = AsyncFilesQuerier(conn=db_conn)
+                await querier_files.create_file(username=ev.username, file_name=ev.file_name, file_category=file_type)
+                return ClassifiedFileEvent(file_type=file_type)
+            else:
+                return IngestedFileEvent(success=False, error="It was not possible to classify the provided file based on the existing categories")
     
 
     @step
