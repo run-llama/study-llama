@@ -69,7 +69,7 @@ func cacheSetupGet(keyGen func(*fiber.Ctx) string) fiber.Handler {
 }
 
 func corsSetup(methods string) fiber.Handler {
-	allowedOrigins := []string{"https://gityear.re"}
+	allowedOrigins := []string{"https://studyllama.my.id"}
 	corsHandler := cors.New(
 		cors.Config{
 			AllowOriginsFunc: func(origin string) bool {

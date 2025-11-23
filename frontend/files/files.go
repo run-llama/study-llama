@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -62,5 +63,6 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Println(fl.ID)
 	return fl.ID, nil
 }
