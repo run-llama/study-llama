@@ -16,3 +16,11 @@ sql:
         package: "rulesdb"
         out: "rulesdb"
         sql_package: "pgx/v5"
+  - engine: "postgresql"
+    queries: "query.files.sql"
+    schema: "schema.files.sql"
+    gen:
+      go:
+        package: "filesdb"
+        out: "filesdb"
+        sql_package: "pgx/v5"
