@@ -4,25 +4,24 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 )
 
 type UploadedFile struct {
-	CreatedAt      *string                `json:"created_at"`
-	DataSourceID   *string                `json:"data_source_id"`
-	ExternalFileID *string                `json:"external_file_id"`
-	FileSize       *int64                 `json:"file_size"`
-	FileType       *string                `json:"file_type"`
-	ID             string                 `json:"id"`
-	LastModifiedAt *string                `json:"last_modified_at"`
-	Name           string                 `json:"name"`
-	PermissionInfo map[string]interface{} `json:"permission_info"`
-	ProjectID      string                 `json:"project_id"`
-	ResourceInfo   map[string]interface{} `json:"resource_info"`
-	UpdatedAt      *string                `json:"updated_at"`
+	CreatedAt      *string        `json:"created_at"`
+	DataSourceID   *string        `json:"data_source_id"`
+	ExternalFileID *string        `json:"external_file_id"`
+	FileSize       *int64         `json:"file_size"`
+	FileType       *string        `json:"file_type"`
+	ID             string         `json:"id"`
+	LastModifiedAt *string        `json:"last_modified_at"`
+	Name           string         `json:"name"`
+	PermissionInfo map[string]any `json:"permission_info"`
+	ProjectID      string         `json:"project_id"`
+	ResourceInfo   map[string]any `json:"resource_info"`
+	UpdatedAt      *string        `json:"updated_at"`
 }
 
 func UploadFile(file io.Reader, fileName string) (string, error) {
@@ -34,6 +33,7 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 
 	io.Copy(fileWriter, file)
 
+	contentType := writer.FormDataContentType()
 	writer.Close()
 	url := "https://api.cloud.llamaindex.ai/api/v1/files"
 	method := "POST"
@@ -44,7 +44,7 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Add("Content-Type", "multipart/form-data")
+	req.Header.Add("Content-Type", contentType)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", "Bearer "+apiKey)
 
@@ -63,6 +63,5 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Println(fl.ID)
 	return fl.ID, nil
 }
