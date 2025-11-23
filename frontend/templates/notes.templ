@@ -1,0 +1,218 @@
+package templates
+
+import "github.com/run-llama/study-llama/frontend/filesdb"
+import "strconv"
+import "slices"
+
+// FilesPage is the main page component for managing files
+templ FilesPage(files []filesdb.File) {
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Study Llama - Upload Your Notes</title>
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    </head>
+	<div class="container mx-auto p-6 max-w-6xl">
+		<div class="flex justify-between items-center mb-6">
+			<h1 class="text-3xl font-bold">Notes Management</h1>
+			<button 
+				class="btn btn-primary"
+				onclick="upload_file_modal.showModal()"
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+					<path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+				</svg>
+				Upload File
+			</button>
+		</div>
+
+		<div id="status-message"></div>
+
+		<div id="files-container" class="space-y-6">
+			@FilesList(files)
+		</div>
+
+		@UploadFileModal()
+	</div>
+}
+
+// FilesList displays files grouped by category
+templ FilesList(files []filesdb.File) {
+	if len(files) == 0 {
+		<div class="alert alert-info">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+			<span>No files yet. Upload your first file to get started!</span>
+		</div>
+	} else {
+		@FilesByCategory(files)
+	}
+}
+
+// FilesByCategory groups and displays files by category
+templ FilesByCategory(files []filesdb.File) {
+    {{
+        groupFilesByCategory := func(files []filesdb.File) map[string][]filesdb.File {
+            categories := []string{}
+            for _, fl := range files {
+                if fl.FileCategory.Valid && !slices.Contains(categories, fl.FileCategory.String) {
+                    categories = append(categories, fl.FileCategory.String)
+                }
+            }
+            categoriesMap := map[string][]filesdb.File{}
+            for _, cat := range categories {
+                for _, fl := range files {
+                    if fl.FileCategory.Valid && fl.FileCategory.String == cat {
+                        ls, ok := categoriesMap[cat]
+                        if !ok {
+                            categoriesMap[cat] = []filesdb.File{fl}
+                        } else {
+                            ls = append(ls, fl)
+                            categoriesMap[cat] = ls
+                        }
+                    }
+                }
+            }
+            return categoriesMap
+        }
+        categoryFiles := groupFilesByCategory(files)
+        numFiles := strconv.Itoa(len(categoryFiles))
+    }}
+	for category, categoryFiles := range groupFilesByCategory(files) {
+		<div class="mb-6">
+			<h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+				</svg>
+				if category == "" {
+					<span>Uncategorized</span>
+				} else {
+					<span>{ category }</span>
+				}
+				<span class="badge badge-ghost">{ numFiles }</span>
+			</h2>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				for _, file := range categoryFiles {
+					@FileCard(file)
+				}
+			</div>
+		</div>
+	}
+}
+
+// FileCard displays a single file
+templ FileCard(file filesdb.File) {
+    {{
+        fileId := strconv.Itoa(int(file.ID))
+    }}
+	<div class="card bg-base-100 shadow-lg border border-base-300 hover:shadow-xl transition-shadow">
+		<div class="card-body p-4">
+			<div class="flex items-start justify-between">
+				<div class="flex items-start gap-3 flex-1 min-w-0">
+					<div class="flex-1 min-w-0">
+						<h3 class="font-semibold text-sm truncate" title={ file.FileName }>
+							{ file.FileName }
+						</h3>
+					</div>
+				</div>
+				<div class="dropdown dropdown-end">
+					<label tabindex="0" class="btn btn-ghost btn-xs btn-square">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+							<path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+						</svg>
+					</label>
+					<ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+						<li>
+							<button 
+								hx-delete={ "/notes/" + fileId }
+								hx-confirm="Are you sure you want to delete this file?"
+								hx-target="#files-container"
+								hx-swap="innerHTML"
+								class="text-error"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+									<path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+								</svg>
+								Delete
+							</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// UploadFileModal is the modal for uploading new files
+templ UploadFileModal() {
+	<dialog id="upload_file_modal" class="modal">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg mb-4">Upload File</h3>
+			<form 
+				hx-post="/notes"
+				hx-encoding="multipart/form-data"
+				hx-target="#files-container"
+				hx-swap="innerHTML"
+				hx-on::after-request="if(event.detail.successful) { upload_file_modal.close(); this.reset(); }"
+			>
+				<div class="form-control w-full mb-4">
+					<label class="label">
+						<span class="label-text">Select File</span>
+					</label>
+					<input 
+						type="file" 
+						name="upload_file" 
+						class="file-input file-input-bordered w-full" 
+						required
+						onchange="updateFileName(this)"
+					/>
+					<label class="label">
+						<span class="label-text-alt" id="file-size-info"></span>
+					</label>
+				</div>
+
+				<div class="form-control w-full mb-4">
+					<label class="label">
+						<span class="label-text">Category (Optional)</span>
+					</label>
+					<select name="file_category" class="select select-bordered w-full">
+						<option value="">Uncategorized</option>
+						<option value="Documents">Documents</option>
+						<option value="Images">Images</option>
+						<option value="Videos">Videos</option>
+						<option value="Audio">Audio</option>
+						<option value="Archives">Archives</option>
+						<option value="Other">Other</option>
+					</select>
+				</div>
+
+				<div class="modal-action">
+					<button type="button" class="btn" onclick="upload_file_modal.close(); this.closest('form').reset();">Cancel</button>
+					<button type="submit" class="btn btn-primary">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+							<path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+						</svg>
+						Upload
+					</button>
+				</div>
+			</form>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+
+	<script>
+		function updateFileName(input) {
+			const fileInfo = document.getElementById('file-size-info');
+			if (input.files && input.files[0]) {
+				const file = input.files[0];
+				const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+				fileInfo.textContent = `${file.name} (${sizeMB} MB)`;
+			} else {
+				fileInfo.textContent = '';
+			}
+		}
+	</script>
+}

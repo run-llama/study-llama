@@ -1,0 +1,29 @@
+version: "2"
+plugins:
+  - name: py
+    wasm:
+      url: https://downloads.sqlc.dev/plugin/sqlc-gen-python_1.3.0.wasm
+      sha256: fbedae96b5ecae2380a70fb5b925fd4bff58a6cfb1f3140375d098fbab7b3a3c
+sql:
+  - schema: "schema.files.sql"
+    queries: "query.files.sql"
+    engine: "postgresql"
+    codegen:
+      - out: src/study_llama/filesdb
+        plugin: py
+        options:
+          package: study_llama.filesdb
+          emit_sync_querier: false
+          emit_async_querier: true
+          emit_pydantic_models: true
+  - schema: "schema.rules.sql"
+    queries: "query.rules.sql"
+    engine: "postgresql"
+    codegen:
+      - out: src/study_llama/rulesdb
+        plugin: py
+        options:
+          package: study_llama.rulesdb
+          emit_sync_querier: false
+          emit_async_querier: true
+          emit_pydantic_models: true

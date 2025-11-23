@@ -12,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/run-llama/study-llama/frontend/auth"
 	db "github.com/run-llama/study-llama/frontend/authdb"
+	"github.com/run-llama/study-llama/frontend/files"
+	"github.com/run-llama/study-llama/frontend/filesdb"
 	"github.com/run-llama/study-llama/frontend/rules"
 	"github.com/run-llama/study-llama/frontend/rulesdb"
 	"github.com/run-llama/study-llama/frontend/templates"
@@ -200,6 +202,64 @@ func HandleDeleteRule(c *fiber.Ctx) error {
 		}
 	}
 	return templates.RulesList(rules).Render(c.Context(), c.Response().BodyWriter())
+}
+
+func HandleUploadFile(c *fiber.Ctx) error {
+	user, err := auth.AuthorizePost(c)
+	c.Set("Content-Type", "text/html")
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	file, err := c.FormFile("upload_file")
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	src, err := file.Open()
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	defer src.Close()
+	_, err = files.UploadFile(src, file.Filename)
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	db, err := files.CreateNewDb()
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	queries := filesdb.New(db)
+	files, err := queries.GetFiles(context.Background(), user.Username)
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	return templates.FilesList(files).Render(c.Context(), c.Response().BodyWriter())
+}
+
+func HandleDeleteFile(c *fiber.Ctx) error {
+	user, err := auth.AuthorizePost(c)
+	c.Set("Content-Type", "text/html")
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	fileId := c.Params("id")
+	fileIdInt, err := strconv.Atoi(fileId)
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	db, err := files.CreateNewDb()
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	queries := filesdb.New(db)
+	err = queries.DeleteFile(context.Background(), int32(fileIdInt))
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	files, err := queries.GetFiles(context.Background(), user.Username)
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	return templates.FilesList(files).Render(c.Context(), c.Response().BodyWriter())
 }
 
 func LoginRoute(c *fiber.Ctx) error {

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["uv_build>=0.9.10,<0.10.0"]
+build-backend = "uv_build"
+
+[project]
+name = "study-llama-backend"
+version = "0.1.0"
+description = "Backend workflows to orchestrate file classification and ingestion into a vector database"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "llama-cloud-services>=0.6.81",
+    "llama-index-workflows>=2.11.4",
+    "openai>=2.8.1",
+    "psycopg2-binary>=2.9.11",
+    "qdrant-client>=1.16.0",
+    "sqlalchemy>=2.0.44",
+]
+
+[tool.uv.build-backend]
+module-name = "study_llama"
+
+[tool.llamadeploy]
+name = "study-llama"
+env_files = [".env"]
+llama_cloud = true
+ 
+[tool.llamadeploy.workflows]
+classify-and-extract = "study_llama.classify_and_extract.workflow:workflow"
+search = "study_llama.search.workflow:workflow"
