@@ -17,7 +17,8 @@ async def get_llama_extract(*args, **kwargs):
 
 @asynccontextmanager
 async def get_db_conn() -> AsyncIterator[AsyncConnection]:
-    eng = create_async_engine(url=os.getenv("POSTGRES_CONNECTION_STRING", "").replace("postgresql://", "postgresql+asyncpg://"))
+    base_url = os.getenv("POSTGRES_CONNECTION_STRING", "").replace("postgresql://", "postgresql+asyncpg://").split("?")[0]
+    eng = create_async_engine(url=base_url)
     async with eng.connect() as db_conn:
         yield db_conn
 
