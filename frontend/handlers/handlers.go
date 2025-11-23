@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/run-llama/study-llama/frontend/agent"
 	"github.com/run-llama/study-llama/frontend/auth"
 	db "github.com/run-llama/study-llama/frontend/authdb"
 	"github.com/run-llama/study-llama/frontend/files"
@@ -219,9 +220,16 @@ func HandleUploadFile(c *fiber.Ctx) error {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
 	}
 	defer src.Close()
-	_, err = files.UploadFile(src, file.Filename)
+	fileId, err := files.UploadFile(src, file.Filename)
 	if err != nil {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	response, err := agent.ProcessFile(agent.InputFileEvent{FileId: fileId, FileName: file.Filename, Username: user.Username})
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	if response.Result.Error != nil {
+		return templates.StatusBanner(errors.New(*response.Result.Error)).Render(c.Context(), c.Response().BodyWriter())
 	}
 	db, err := files.CreateNewDb()
 	if err != nil {
@@ -318,4 +326,25 @@ func CategoriesRoute(c *fiber.Ctx) error {
 	}
 
 	return templates.RulesPage(user.Username, rules).Render(c.Context(), c.Response().BodyWriter())
+}
+
+func FilesRoute(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.SendStatus(fiber.StatusMethodNotAllowed)
+	}
+	user, err := auth.AuthorizeGet(c)
+	c.Set("Content-Type", "text/html")
+	if err != nil {
+		return templates.AuthFailedPage().Render(c.Context(), c.Response().BodyWriter())
+	}
+	db, err := files.CreateNewDb()
+	if err != nil {
+		return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	queries := filesdb.New(db)
+	files, err := queries.GetFiles(context.Background(), user.Username)
+	if err != nil {
+		return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	return templates.FilesPage(files).Render(c.Context(), c.Response().BodyWriter())
 }

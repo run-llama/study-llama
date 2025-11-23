@@ -14,8 +14,12 @@ templ FilesPage(files []filesdb.File) {
         <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     </head>
-	<div class="container mx-auto p-6 max-w-6xl">
-		<div class="flex justify-between items-center mb-6">
+	<div class="container mx-auto p-6 w-full min-h-screen">
+        @NavBar(true)
+		<div class="grid grid-cols-3 justify-between items-center mb-6">
+                <div class="flex flex-col items-center mb-8">
+                    <img src="/static/rules.png" class="w-[70%] h-[70%]"/>
+			    </div>
 			<h1 class="text-3xl font-bold">Notes Management</h1>
 			<button 
 				class="btn btn-primary"
@@ -36,6 +40,7 @@ templ FilesPage(files []filesdb.File) {
 
 		@UploadFileModal()
 	</div>
+    @Footer()
 }
 
 // FilesList displays files grouped by category
@@ -170,21 +175,6 @@ templ UploadFileModal() {
 					<label class="label">
 						<span class="label-text-alt" id="file-size-info"></span>
 					</label>
-				</div>
-
-				<div class="form-control w-full mb-4">
-					<label class="label">
-						<span class="label-text">Category (Optional)</span>
-					</label>
-					<select name="file_category" class="select select-bordered w-full">
-						<option value="">Uncategorized</option>
-						<option value="Documents">Documents</option>
-						<option value="Images">Images</option>
-						<option value="Videos">Videos</option>
-						<option value="Audio">Audio</option>
-						<option value="Archives">Archives</option>
-						<option value="Other">Other</option>
-					</select>
 				</div>
 
 				<div class="modal-action">
