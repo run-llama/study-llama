@@ -6,7 +6,7 @@ on:
       - "frontend/**/*.go"
 
 jobs:
-  build:
+  go_build:
     runs-on: ubuntu-latest
     permissions:
       contents: write

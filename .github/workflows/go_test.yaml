@@ -10,7 +10,7 @@ on:
       - "frontend/**/*.go"
 
 jobs:
-  test:
+  go_test:
     runs-on: ubuntu-latest
 
     strategy:

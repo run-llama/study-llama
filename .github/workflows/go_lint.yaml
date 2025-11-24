@@ -10,7 +10,7 @@ on:
       - "frontend/**/*.go"
 
 jobs:
-  lint:
+  go_lint:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,13 +21,14 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
     
       - name: Set up golangci
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
-
+          working-directory: frontend
+        
       - name: Format
         working-directory: frontend
         run: make format-fe
