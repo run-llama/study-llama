@@ -1,0 +1,5 @@
+.env
+*_test.go
+sqlc.yaml
+*.db
+tmp/

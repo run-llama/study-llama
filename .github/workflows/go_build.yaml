@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**/*.go"
+
+jobs:
+  go_build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Build multi-platform packages
+        working-directory: frontend
+        run: make build-fe
+
+      - name: Clean built packages
+        working-directory: frontend
+        run: make clean-build-fe

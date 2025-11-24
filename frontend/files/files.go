@@ -31,10 +31,10 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 
 	fileWriter, _ := writer.CreateFormFile("upload_file", fileName)
 
-	io.Copy(fileWriter, file)
+	_, _ = io.Copy(fileWriter, file)
 
 	contentType := writer.FormDataContentType()
-	writer.Close()
+	_ = writer.Close()
 	url := "https://api.cloud.llamaindex.ai/api/v1/files"
 	method := "POST"
 
@@ -52,7 +52,7 @@ func UploadFile(file io.Reader, fileName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
