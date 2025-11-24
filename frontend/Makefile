@@ -34,3 +34,6 @@ build-fe: install-deps-fe
 
 clean-build-fe:
 	@rm -rf ${BIN}
+
+run-fe:
+	go run main.go
