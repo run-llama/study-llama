@@ -69,7 +69,7 @@ func cacheSetupGet(keyGen func(*fiber.Ctx) string) fiber.Handler {
 }
 
 func corsSetup(methods string) fiber.Handler {
-	allowedOrigins := []string{"https://gityear.re"}
+	allowedOrigins := []string{"https://studyllama.my.id"}
 	corsHandler := cors.New(
 		cors.Config{
 			AllowOriginsFunc: func(origin string) bool {
@@ -122,7 +122,12 @@ func Setup() *fiber.App {
 	app.Get("/categories", corsSetup("GET"), handlers.CategoriesRoute)
 	app.Post("/rules", limiterSetup(10), corsSetup("POST"), handlers.HandleCreateRule)
 	app.Patch("/rules", limiterSetup(10), corsSetup("POST"), handlers.HandleUpdateRule)
-	app.Delete("/rules/:id", limiterSetup(10), corsSetup("POST"), handlers.HandleDeleteRule)
+	app.Delete("/rules/:id", limiterSetup(10), corsSetup("DELETE"), handlers.HandleDeleteRule)
+	app.Get("/notes", corsSetup("GET"), handlers.FilesRoute)
+	app.Post("/notes", limiterSetup(10), corsSetup("POST"), handlers.HandleUploadFile)
+	app.Delete("/notes/:id", limiterSetup(10), corsSetup("DELETE"), handlers.HandleDeleteFile)
+	app.Get("/review", corsSetup("GET"), handlers.SearchRoute)
+	app.Post("/review", limiterSetup(10), corsSetup("POST"), handlers.HandleSearch)
 	app.Get("/", handlers.HomeRoute)
 	app.Static("/static", "./static/")
 	app.Use(handlers.PageDoesNotExistRoute)

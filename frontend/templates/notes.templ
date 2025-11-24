@@ -6,36 +6,45 @@ import "slices"
 
 // FilesPage is the main page component for managing files
 templ FilesPage(files []filesdb.File) {
+    <html lang="en" class="h-full">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>Study Llama - Upload Your Notes</title>
         <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js"></script>
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     </head>
-	<div class="container mx-auto p-6 max-w-6xl">
-		<div class="flex justify-between items-center mb-6">
-			<h1 class="text-3xl font-bold">Notes Management</h1>
-			<button 
-				class="btn btn-primary"
-				onclick="upload_file_modal.showModal()"
-			>
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-					<path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-				</svg>
-				Upload File
-			</button>
-		</div>
+    <body class="h-full flex flex-col">
+        @NavBar(true)
+        <div class="container mx-auto p-6 w-full flex-1">
+            <div class="grid grid-cols-3 justify-between items-center mb-6">
+                <div class="flex flex-col items-center mb-8">
+                    <img src="/static/rules.png" class="w-[70%] h-[70%]"/>
+                </div>
+                <h1 class="text-3xl font-bold">Notes Management</h1>
+                <button 
+                    class="btn btn-primary"
+                    onclick="upload_file_modal.showModal()"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                    Upload File
+                </button>
+            </div>
 
-		<div id="status-message"></div>
+            <div id="status-message"></div>
 
-		<div id="files-container" class="space-y-6">
-			@FilesList(files)
-		</div>
+            <div id="files-container" class="space-y-6">
+                @FilesList(files)
+            </div>
 
-		@UploadFileModal()
-	</div>
+            @UploadFileModal()
+        </div>
+        @Footer()
+    </body>
+    </html>
 }
 
 // FilesList displays files grouped by category
@@ -77,9 +86,8 @@ templ FilesByCategory(files []filesdb.File) {
             return categoriesMap
         }
         categoryFiles := groupFilesByCategory(files)
-        numFiles := strconv.Itoa(len(categoryFiles))
     }}
-	for category, categoryFiles := range groupFilesByCategory(files) {
+	for category, categoryFiles := range categoryFiles {
 		<div class="mb-6">
 			<h2 class="text-2xl font-semibold mb-4 flex items-center gap-2">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,7 +98,7 @@ templ FilesByCategory(files []filesdb.File) {
 				} else {
 					<span>{ category }</span>
 				}
-				<span class="badge badge-ghost">{ numFiles }</span>
+				<span class="badge badge-ghost">{ strconv.Itoa(len(categoryFiles)) }</span>
 			</h2>
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				for _, file := range categoryFiles {
@@ -172,29 +180,18 @@ templ UploadFileModal() {
 					</label>
 				</div>
 
-				<div class="form-control w-full mb-4">
-					<label class="label">
-						<span class="label-text">Category (Optional)</span>
-					</label>
-					<select name="file_category" class="select select-bordered w-full">
-						<option value="">Uncategorized</option>
-						<option value="Documents">Documents</option>
-						<option value="Images">Images</option>
-						<option value="Videos">Videos</option>
-						<option value="Audio">Audio</option>
-						<option value="Archives">Archives</option>
-						<option value="Other">Other</option>
-					</select>
-				</div>
-
 				<div class="modal-action">
 					<button type="button" class="btn" onclick="upload_file_modal.close(); this.closest('form').reset();">Cancel</button>
-					<button type="submit" class="btn btn-primary">
+					<button type="submit" class="btn btn-primary" hx-indicator="#loadingIndicator">
 						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
 							<path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
 						</svg>
 						Upload
 					</button>
+				</div>
+				<br>
+				<div id="loadingIndicator" class="htmx-indicator flex justify-center items-center">
+					<span class="loading loading-spinner loading-lg"></span>
 				</div>
 			</form>
 		</div>
