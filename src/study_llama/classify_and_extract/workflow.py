@@ -62,6 +62,7 @@ class ClassifyExtractWorkflow(Workflow):
                     file_name=ev.file_name,
                     file_category=file_type,
                 )
+                await db_conn.commit()
                 return ClassifiedFileEvent(file_type=file_type)
             else:
                 return IngestedFileEvent(

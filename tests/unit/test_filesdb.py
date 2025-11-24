@@ -21,3 +21,4 @@ async def test_file_upload() -> None:
         assert fl.file_category == "test"
         assert fl.username == "testuser"
         assert fl.file_name == "testfile.pdf"
+        await db_conn.commit()
