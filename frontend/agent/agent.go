@@ -23,9 +23,15 @@ type InputFileEvent struct {
 	FileName string `json:"file_name"`
 }
 
-type FilesResponseResult struct {
+type FilesResultValue struct {
 	Success bool    `json:"success"`
 	Error   *string `json:"error"`
+}
+type FilesResponseResult struct {
+	Value         FilesResultValue `json:"value"`
+	QualifiedName string           `json:"qualified_name"`
+	Type          string           `json:"type"`
+	Types         []string         `json:"types"`
 }
 
 type FilesResponseBody struct {
@@ -38,6 +44,10 @@ type FilesResponseBody struct {
 	CompletedAt  *string              `json:"completed_at"`
 	Error        *string              `json:"error"`
 	Result       *FilesResponseResult `json:"result"`
+}
+
+func (b *FilesResponseBody) GetErrorString() *string {
+	return b.Result.Value.Error
 }
 
 type SearchRequestBody struct {
@@ -62,8 +72,15 @@ type SearchResult struct {
 	Category   string  `json:"category"`
 }
 
-type SearchResponseResult struct {
+type SearchResultValue struct {
 	Results []SearchResult `json:"results"`
+}
+
+type SearchResponseResult struct {
+	Value         SearchResultValue `json:"value"`
+	QualifiedName string            `json:"qualified_name"`
+	Type          string            `json:"type"`
+	Types         []string          `json:"types"`
 }
 
 type SearchResponseBody struct {
@@ -76,6 +93,13 @@ type SearchResponseBody struct {
 	CompletedAt  *string               `json:"completed_at"`
 	Error        *string               `json:"error"`
 	Result       *SearchResponseResult `json:"result"`
+}
+
+func (b *SearchResponseBody) GetResults() []SearchResult {
+	if b.Result != nil {
+		return b.Result.Value.Results
+	}
+	return nil
 }
 
 func ProcessFile(fileInput InputFileEvent) (*FilesResponseBody, error) {
@@ -162,15 +186,15 @@ func ProcessSearch(searchInput SearchInputEvent) (*SearchResponseBody, error) {
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(string(body))
+	}
+
 	var response SearchResponseBody
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return nil, err
-	}
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(*response.Error)
 	}
 	return &response, nil
 }

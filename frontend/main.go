@@ -126,6 +126,8 @@ func Setup() *fiber.App {
 	app.Get("/notes", corsSetup("GET"), handlers.FilesRoute)
 	app.Post("/notes", limiterSetup(10), corsSetup("POST"), handlers.HandleUploadFile)
 	app.Delete("/notes/:id", limiterSetup(10), corsSetup("DELETE"), handlers.HandleDeleteFile)
+	app.Get("/review", corsSetup("GET"), handlers.SearchRoute)
+	app.Post("/review", limiterSetup(10), corsSetup("POST"), handlers.HandleSearch)
 	app.Get("/", handlers.HomeRoute)
 	app.Static("/static", "./static/")
 	app.Use(handlers.PageDoesNotExistRoute)

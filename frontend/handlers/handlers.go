@@ -228,8 +228,8 @@ func HandleUploadFile(c *fiber.Ctx) error {
 	if err != nil {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
 	}
-	if response.Result.Error != nil {
-		return templates.StatusBanner(errors.New(*response.Result.Error)).Render(c.Context(), c.Response().BodyWriter())
+	if response.GetErrorString() != nil {
+		return templates.StatusBanner(errors.New(*response.GetErrorString())).Render(c.Context(), c.Response().BodyWriter())
 	}
 	db, err := files.CreateNewDb()
 	if err != nil {
@@ -268,6 +268,35 @@ func HandleDeleteFile(c *fiber.Ctx) error {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
 	}
 	return templates.FilesList(files).Render(c.Context(), c.Response().BodyWriter())
+}
+
+func HandleSearch(c *fiber.Ctx) error {
+	user, err := auth.AuthorizePost(c)
+	c.Set("Content-Type", "text/html")
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	searchType := c.FormValue("search_type")
+	searchInput := c.FormValue("search_input")
+	fileName := c.FormValue("file_name") // only one file name is allowed (can be empty)
+	category := c.FormValue("category")  // select among available categories (can be empty)
+	var categoryFilter *string
+	var fileNameFilter *string
+	if category == "" {
+		categoryFilter = nil
+	} else {
+		categoryFilter = &category
+	}
+	if fileName == "" {
+		fileNameFilter = nil
+	} else {
+		fileNameFilter = &fileName
+	}
+	searchResult, err := agent.ProcessSearch(agent.SearchInputEvent{SearchType: searchType, SearchInput: searchInput, Category: categoryFilter, FileName: fileNameFilter, Username: user.Username})
+	if err != nil {
+		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	return templates.SearchResultsList(searchResult.GetResults()).Render(c.Context(), c.Response().BodyWriter())
 }
 
 func LoginRoute(c *fiber.Ctx) error {
@@ -344,7 +373,46 @@ func FilesRoute(c *fiber.Ctx) error {
 	queries := filesdb.New(db)
 	files, err := queries.GetFiles(context.Background(), user.Username)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return templates.FilesPage([]filesdb.File{}).Render(c.Context(), c.Response().BodyWriter())
+		}
 		return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
 	}
 	return templates.FilesPage(files).Render(c.Context(), c.Response().BodyWriter())
+}
+
+func SearchRoute(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.SendStatus(fiber.StatusMethodNotAllowed)
+	}
+	user, err := auth.AuthorizeGet(c)
+	c.Set("Content-Type", "text/html")
+	if err != nil {
+		return templates.AuthFailedPage().Render(c.Context(), c.Response().BodyWriter())
+	}
+	db, err := rules.CreateNewDb()
+	if err != nil {
+		return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	queries := rulesdb.New(db)
+	rules, err := queries.GetRules(context.Background(), user.Username)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+		}
+		rules = []rulesdb.Rule{}
+	}
+	dbFiles, err := files.CreateNewDb()
+	if err != nil {
+		return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+	}
+	queriesFiles := filesdb.New(dbFiles)
+	files, err := queriesFiles.GetFiles(context.Background(), user.Username)
+	if err != nil {
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return templates.Page500(err).Render(c.Context(), c.Response().BodyWriter())
+		}
+		files = []filesdb.File{}
+	}
+	return templates.SearchPage(rules, files).Render(c.Context(), c.Response().BodyWriter())
 }
