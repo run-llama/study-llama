@@ -127,7 +127,7 @@ func ProcessFile(fileInput InputFileEvent) (*FilesResponseBody, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -178,7 +178,7 @@ func ProcessSearch(searchInput SearchInputEvent) (*SearchResponseBody, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Read the response
 	body, err := io.ReadAll(resp.Body)

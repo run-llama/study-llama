@@ -219,7 +219,7 @@ func HandleUploadFile(c *fiber.Ctx) error {
 	if err != nil {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
 	}
-	defer src.Close()
+	defer func() { _ = src.Close() }()
 	fileId, err := files.UploadFile(src, file.Filename)
 	if err != nil {
 		return templates.StatusBanner(err).Render(c.Context(), c.Response().BodyWriter())
