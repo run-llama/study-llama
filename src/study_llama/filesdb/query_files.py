@@ -24,8 +24,15 @@ class AsyncQuerier:
     def __init__(self, conn: sqlalchemy.ext.asyncio.AsyncConnection):
         self._conn = conn
 
-    async def create_file(self, *, username: str, file_name: str, file_category: Optional[str]) -> Optional[models.File]:
-        row = (await self._conn.execute(sqlalchemy.text(CREATE_FILE), {"p1": username, "p2": file_name, "p3": file_category})).first()
+    async def create_file(
+        self, *, username: str, file_name: str, file_category: Optional[str]
+    ) -> Optional[models.File]:
+        row = (
+            await self._conn.execute(
+                sqlalchemy.text(CREATE_FILE),
+                {"p1": username, "p2": file_name, "p3": file_category},
+            )
+        ).first()
         if row is None:
             return None
         return models.File(
